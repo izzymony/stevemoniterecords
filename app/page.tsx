@@ -338,8 +338,8 @@ export default function Home() {
       <Section id="videos" className="bg-[#050505]">
         <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
           <div>
-            <span className="text-accent-orange font-bold uppercase tracking-widest text-sm mb-4 block">Visual Experience</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Music Videos</h2>
+            <span className="text-accent-orange font-bold uppercase tracking-widest text-sm mb-4 block">Behind the Sound</span>
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Studio Sessions</h2>
           </div>
           <Link href="/videos" className="flex items-center gap-2 text-white/60 hover:text-accent-orange transition-colors group">
             <span className="font-bold uppercase tracking-widest text-xs">Watch All</span>

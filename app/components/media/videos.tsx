@@ -62,7 +62,7 @@ const Videos = () => {
     const fetchVideos = async () => {
         setLoading(true);
         const { data, error } = await supabase
-            .from('media')
+            .from('videos')
             .select('*')
             .eq('type', 'video')
             .order('created_at', { ascending: false });

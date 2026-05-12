@@ -84,7 +84,7 @@ const AdminDashboard = () => {
                 <nav className="space-y-2">
                     <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }} />
                     <SidebarItem icon={Disc} label="Releases" active={activeTab === 'releases'} onClick={() => { setActiveTab('releases'); setIsSidebarOpen(false); }} />
-                    <SidebarItem icon={Video} label="Videos" active={activeTab === 'videos'} onClick={() => { setActiveTab('videos'); setIsSidebarOpen(false); }} />
+                    <SidebarItem icon={Video} label="Studio Sessions" active={activeTab === 'videos'} onClick={() => { setActiveTab('videos'); setIsSidebarOpen(false); }} />
                     <SidebarItem icon={Camera} label="Gallery" active={activeTab === 'gallery'} onClick={() => { setActiveTab('gallery'); setIsSidebarOpen(false); }} />
                     <SidebarItem icon={Calendar} label="Events" active={activeTab === 'events'} onClick={() => { setActiveTab('events'); setIsSidebarOpen(false); }} />
                 </nav>
