@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Disc, Edit3, Trash2, X, Upload, Camera, Calendar, Link as LinkIcon } from 'lucide-react';
+import { Plus, Disc, Edit3, Trash2, X, Upload, Camera, Calendar, Link as LinkIcon, Play } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
@@ -322,7 +322,7 @@ const Releases = () => {
 
                                 {/* Album Cover Card */}
                                 <div className="relative z-10 w-full bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-accent-orange/50 transition-all duration-500 shadow-2xl flex flex-col md:flex-row">
-                                    <div className="relative w-full md:w-48 aspect-square shrink-0 overflow-hidden">
+                                    <div className="relative w-full md:w-56 aspect-square shrink-0 overflow-hidden group/cover">
                                         {item.img_url ? (
                                             <img 
                                                 src={item.img_url} 
@@ -334,7 +334,26 @@ const Releases = () => {
                                                 <Disc className="w-12 h-12 text-white/10" />
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                                        <div className="absolute inset-0 bg-black/40 group-hover/cover:bg-black/60 transition-colors" />
+                                        
+                                        {/* Aesthetic Play Button Overlay */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-all duration-500 scale-90 group-hover/cover:scale-100">
+                                            {item.spotify_url ? (
+                                                <a 
+                                                    href={item.spotify_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="w-14 h-14 rounded-full bg-accent-orange text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,87,34,0.3)] hover:scale-110 transition-transform active:scale-95"
+                                                >
+                                                    <Play className="w-6 h-6 fill-current ml-1" />
+                                                </a>
+                                            ) : (
+                                                <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[8px] font-black uppercase tracking-widest text-white/50">
+                                                    No Link
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/70">
                                             {item.type}
                                         </div>
@@ -350,29 +369,37 @@ const Releases = () => {
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center gap-3">
-                                            {item.spotify_url && (
+                                        <div className="flex flex-col md:flex-row items-center gap-4 mt-auto pt-6 border-t border-white/5">
+                                            {item.spotify_url ? (
                                                 <a 
                                                     href={item.spotify_url} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500/10 hover:bg-green-500 text-green-500 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all border border-green-500/20"
+                                                    className="w-full md:flex-1 flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl bg-[#1DB954]/10 hover:bg-[#1DB954] text-[#1DB954] hover:text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 border border-[#1DB954]/20 group/btn shadow-xl"
                                                 >
-                                                    Listen on Spotify
+                                                    <Play className="w-3.5 h-3.5 fill-current group-hover/btn:scale-110 transition-transform" />
+                                                    View on Spotify
                                                 </a>
+                                            ) : (
+                                                <div className="w-full md:flex-1 flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl bg-white/5 text-white/20 text-[10px] font-black uppercase tracking-[0.2em] border border-white/5 italic">
+                                                    No Link Added
+                                                </div>
                                             )}
-                                            <div className="flex items-center gap-2">
+                                            
+                                            <div className="flex items-center gap-2 w-full md:w-auto justify-center">
                                                 <button 
                                                     onClick={() => handleEdit(item)}
-                                                    className="p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-accent-orange hover:text-white transition-all"
+                                                    className="p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-accent-orange hover:text-white transition-all shadow-lg group/edit"
+                                                    title="Edit Release"
                                                 >
-                                                    <Edit3 className="w-4 h-4" />
+                                                    <Edit3 className="w-4 h-4 group-hover/edit:rotate-12 transition-transform" />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(item.id)}
-                                                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all"
+                                                    className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all shadow-lg group/trash"
+                                                    title="Delete Release"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 className="w-4 h-4 group-hover/trash:scale-110 transition-transform" />
                                                 </button>
                                             </div>
                                         </div>

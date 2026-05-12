@@ -1,17 +1,81 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Play, Music, ArrowRight, Disc, Award, Users, Globe, Mail } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, Music, ArrowRight, Disc, Award, Users, Globe, Mail, Link as LinkIcon } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Section from "./components/Section";
 import { supabase } from "@/lib/supabaseClient";
 
 import { cn } from "@/lib/utils";
 
+interface Release {
+    id: string;
+    title: string;
+    type: string;
+    release_date: string;
+    img_url: string;
+    spotify_url: string;
+}
+
+interface Video {
+    id: string;
+    title: string;
+    video_url: string;
+    thumbnail_url: string;
+}
+
+interface GalleryItem {
+    id: string;
+   images: string;
+   title: string;
+
+}
+
 
 export default function Home() {
+  const [releases, setReleases] = useState<Release[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch Releases
+      const { data: releasesData } = await supabase
+        .from('releases')
+        .select('*')
+        .order('release_date', { ascending: false })
+        .limit(6);
+      
+      // Fetch Videos
+      const { data: videosData } = await supabase
+        .from('media')
+        .select('*')
+        .limit(4);
+
+      // Fetch Gallery
+      const { data: galleryData } = await supabase
+        .from('steve_monite_gallery')
+        .select('*')
+        .limit(12);
+      
+      if (releasesData) setReleases(releasesData);
+      if (videosData) setVideos(videosData);
+      if (galleryData) {
+        // Map database fields to the new interface names
+         
+        setGallery(galleryData);
+      }
+      
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <main className="relative flex flex-col w-full">
       <Navbar />
@@ -47,7 +111,7 @@ export default function Home() {
               <span className="text-gradient-orange">MONITE</span>
             </h1>
             <p className="max-w-xl text-lg md:text-xl text-white/70 font-medium mb-10 leading-relaxed">
-              Redefining the rhythm of the continent. Experience the cinematic energy of Afrobuggy music — where culture meets the future.
+              Redefining the rhythm of the continent. Experience the cinematic energy of Afroboggie music — where culture meets the future.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -93,126 +157,285 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            { title: "Neon Nights", type: "Single", img: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000", color: "from-accent-orange" },
-            { title: "Buggy Wave", type: "Album", img: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=1000", color: "from-accent-purple" },
-            { title: "Electric Soul", type: "EP", img: "https://images.unsplash.com/photo-1459749411177-042180ce673c?q=80&w=1000", color: "from-accent-gold" },
-          ].map((release, i) => (
-            <motion.div
-              key={release.title}
-              whileHover={{ y: -10 }}
-              className="group relative aspect-square overflow-hidden rounded-3xl glass border border-white/5"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {loading ? (
+            <div className="col-span-full py-24 text-center">
+              <div className="w-12 h-12 border-4 border-accent-orange/20 border-t-accent-orange rounded-full animate-spin mx-auto mb-4" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Syncing Discography...</span>
+            </div>
+          ) : releases.length === 0 ? (
+            <div className="col-span-full py-24 border-2 border-dashed border-white/5 rounded-3xl text-center">
+              <Disc className="w-12 h-12 text-white/5 mx-auto mb-4" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 italic">No releases found</span>
+            </div>
+          ) : (
+            releases.map((release, i) => (
+              <motion.div
+                key={release.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group relative aspect-square overflow-hidden rounded-[2.5rem] bg-white/5 border border-white/10 shadow-2xl"
+              >
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                  <img 
+                    src={release.img_url} 
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                    alt={release.title} 
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-500" />
+                </div>
+
+                {/* Aesthetic Play Button (Center) */}
+                <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                  {release.spotify_url ? (
+                    <a 
+                      href={release.spotify_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-20 h-20 rounded-full bg-accent-orange text-white flex items-center justify-center shadow-[0_0_30px_rgba(255,87,34,0.4)] hover:scale-110 transition-transform active:scale-95 group/play"
+                    >
+                      <Play className="w-8 h-8 fill-current ml-1 group-hover:scale-110 transition-transform" />
+                    </a>
+                  ) : (
+                    <div className="px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/60">
+                      Coming Soon
+                    </div>
+                  )}
+                </div>
+
+                {/* Content Overlay */}
+                <div className="absolute inset-0 z-20 p-10 flex flex-col justify-end pointer-events-none">
+                  <motion.div
+                    className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500"
+                  >
+                    <span className="inline-block px-3 py-1 rounded-full bg-accent-orange/20 border border-accent-orange/30 text-[8px] font-black uppercase tracking-[0.2em] text-accent-orange mb-3">
+                      {release.type}
+                    </span>
+                    <h3 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+                      {release.title}
+                    </h3>
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
+                      {release.release_date ? new Date(release.release_date).getFullYear() : '2024'} • Steve Monite
+                    </p>
+                  </motion.div>
+                </div>
+
+                {/* Bottom Shine Effect */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black to-transparent opacity-80 z-5" />
+              </motion.div>
+            ))
+          )}
+        </div>
+      </Section>
+
+      {/* 3. ABOUT THE ARTIST */}
+      <Section id="about" className="bg-[#080808] relative overflow-hidden py-32">
+        {/* Large Background Text */}
+        <div className="absolute left-[-5%] top-1/2 -translate-y-1/2 text-[20vw] font-black text-white/[0.02] select-none pointer-events-none uppercase tracking-tighter">
+          Origins
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start relative z-10">
+          {/* Editorial Image Side - Sticky for better flow */}
+          <div className="relative order-2 lg:order-1 lg:sticky lg:top-32">
+            <div className="absolute -top-10 -left-10 w-full h-full border border-accent-orange/20 rounded-[3rem] z-0" />
+            
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative aspect-[4/5] rounded-[3rem] overflow-hidden glass border border-white/10 z-10 shadow-2xl"
             >
               <Image
-                src={release.img}
-                alt={release.title}
+                src="/Alt-Image-1-S.webp"
+                alt="Artist Portrait"
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-60"
+                className="object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-105 hover:scale-100"
               />
-              <div className={cn("absolute inset-0 bg-gradient-to-t to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500", release.color)} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+            </motion.div>
 
-              <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                <span className="text-xs font-bold uppercase tracking-widest text-white/60 mb-2">{release.type}</span>
-                <h3 className="text-3xl font-black uppercase tracking-tighter mb-6">{release.title}</h3>
-                <div className="flex gap-4 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 delay-100">
-                  <button className="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-white hover:text-black transition-colors">
-                    <Play className="w-4 h-4 fill-current" />
-                  </button>
-                  <button className="flex-1 rounded-full glass-dark text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors">
-                    Stream Now
-                  </button>
+            {/* Floating Accent Card */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="absolute -bottom-8 -right-8 p-8 rounded-3xl glass-dark border border-white/10 shadow-2xl z-20 max-w-[200px]"
+            >
+              <span className="text-3xl font-black text-accent-orange block mb-2">Benin</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">City Roots to Global Stages</span>
+            </motion.div>
+          </div>
+
+          {/* Content Side */}
+          <div className="order-1 lg:order-2">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <div>
+                <span className="inline-block px-4 py-1.5 rounded-full bg-accent-orange/10 border border-accent-orange/20 text-accent-orange text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+                  The Journey
+                </span>
+                <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
+                  Crafting the <br />
+                  <span className="text-gradient-orange">Afro-Boogie</span> <br />
+                  Sound
+                </h2>
+              </div>
+
+              {/* Scrollable Narrative Container */}
+              <div className="relative group">
+                <div className="max-h-[500px] overflow-y-auto pr-8 space-y-6 text-white/60 text-lg font-medium leading-relaxed custom-scrollbar">
+                  <p className="first-letter:text-6xl first-letter:font-black first-letter:text-accent-orange first-letter:mr-3 first-letter:float-left first-letter:mt-2">
+                    My journey into music did not begin with a record deal or a studio session. It began in the pews of an Anglican church on Ozah Street in Benin City, where, as a young boy, I learned the power of listening. Sunday after Sunday, we were taught not only how to sing, but also how to write songs — though at the time, most of them were rooted in gospel and religious music.
+                  </p>
+                  <p>
+                    In those days, Benin City was a melting pot of sounds, and being part of the choir gave me a front-row seat to the intricate harmonies and rhythmic complexities of African gospel. We weren&apos;t just performers; we were students of melody. This spiritual foundation became the bedrock of my musical identity, even as I eventually branched out to create what is now known as Afro-Boogie.
+                  </p>
+                  <p>
+                    By 1979, restless and unwilling to settle into a regular nine-to-five life, I began recording demonstration tapes and sending them to record companies across the country. Rejections came often. Some told me I needed to improve. Others said nothing at all. But rejection only strengthened my determination.
+                  </p>
+                  <p>
+                    I spent the following years refining my craft before eventually travelling to London, where I connected with producers and musicians who, like me, were searching for their own breakthrough. One of those collaborators was Herman Asafo-Agyei — the Ghanaian bassist, singer, and bandleader who was balancing his musical ambitions alongside a law degree at the time.
+                  </p>
+                  <p>
+                    Between 1982 and 1984, we worked together on demos that I carried from Nigeria to London, knocking on doors and searching for an opportunity. Eventually, one of those doors opened. Chief Tony Okoroji, working through EMI Records, heard my music and was captivated by the sound.
+                  </p>
+                  <p>
+                    “When Tony Okoroji first heard the music, he decided to sign me to EMI as an artiste,” I recalled. “And that was the beginning for me.” That moment marked the true start of a journey that would shape my identity, my sound, and my place in music history.
+                  </p>
                 </div>
+                {/* Subtle Bottom Fade to indicate more text */}
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none group-hover:opacity-0 transition-opacity" />
+              </div>
+
+              {/* Pillar Stats */}
+              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                <div>
+                  <span className="text-2xl font-black text-white block">20+ YRS</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Musical Innovation</span>
+                </div>
+                <div>
+                  <span className="text-2xl font-black text-white block">100%</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Pure Afro-Boogie</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </Section>
+
+      {/* 4. BRANDS & COLLABORATIONS */}
+      
+
+      {/* 5. MEDIA (VIDEOS) */}
+      <Section id="videos" className="bg-[#050505]">
+        <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
+          <div>
+            <span className="text-accent-orange font-bold uppercase tracking-widest text-sm mb-4 block">Visual Experience</span>
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Music Videos</h2>
+          </div>
+          <Link href="/videos" className="flex items-center gap-2 text-white/60 hover:text-accent-orange transition-colors group">
+            <span className="font-bold uppercase tracking-widest text-xs">Watch All</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {videos.map((video, i) => (
+            <motion.div
+              key={video.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="group relative aspect-video rounded-[2.5rem] overflow-hidden glass border border-white/5 cursor-pointer shadow-2xl"
+            >
+              <img 
+                src={video.thumbnail_url} 
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-70 group-hover:opacity-100" 
+                alt={video.title} 
+              />
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-all duration-500" />
+              
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-accent-orange/90 text-white flex items-center justify-center scale-90 group-hover:scale-100 transition-all duration-500 shadow-[0_0_30px_rgba(255,87,34,0.4)]">
+                  <Play className="w-6 h-6 fill-current ml-1" />
+                </div>
+              </div>
+
+              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black to-transparent">
+                <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{video.title}</h3>
               </div>
             </motion.div>
           ))}
         </div>
       </Section>
 
-      {/* 3. ABOUT THE ARTIST */}
-      <Section id="about" className="bg-[#080808]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="relative aspect-[4/5] rounded-3xl overflow-hidden glass border border-white/10 order-2 lg:order-1">
-            <Image
-              src="/Alt-Image-1-S.webp"
-              alt="Artist in studio"
-              fill
-              className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+      {/* 6. GALLERY */}
+      <Section id="gallery" className="bg-black py-32 overflow-hidden">
+        <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
+          <div>
+            <span className="text-accent-orange font-bold uppercase tracking-widest text-sm mb-4 block">Visual Archive</span>
+            <h2 className="text-4xl md:text-8xl font-black uppercase tracking-tighter">Photo Gallery</h2>
           </div>
+          <div className="flex items-center gap-4 text-white/30 text-[10px] font-bold uppercase tracking-widest">
+            <span className="w-12 h-[1px] bg-white/10" />
+            Moments in Time
+          </div>
+        </div>
 
-          <div className="order-1 lg:order-2">
-            <span className="text-accent-gold font-bold uppercase tracking-widest text-sm mb-4 block">The Journey</span>
-            <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter mb-8">Crafting the <span className="text-accent-orange">Afro-Boogie</span> Sound</h2>
-            <div className="space-y-6 text-white/70 text-lg leading-relaxed mb-12">
-              <p>
-                My journey into music did not begin with a record deal or a studio session. It began in the pews of an Anglican church on Ozah Street in Benin City, where, as a young boy, I learned the power of listening. Sunday after Sunday, we were taught not only how to sing, but also how to write songs — though at the time, most of them were rooted in gospel and religious music.
-              </p>
-              <p>
-                As I grew older, the sacred and the secular slowly began to separate for me. Music drifted into the background, replaced by the ambitions and realities of young adulthood in late-1970s Nigeria. But ambition, as it turned out, would eventually lead me right back to music.
-              </p>
-              <p>
-                By 1979, restless and unwilling to settle into a regular nine-to-five life, I began recording demonstration tapes and sending them to record companies across the country. Rejections came often. Some told me I needed to improve. Others said nothing at all.
-              </p>
-              <p>
-                But rejection only strengthened my determination. I knew there was something authentic in my sound — something unique. I spent the following years refining my craft before eventually travelling to London, where I connected with producers and musicians who, like me, were searching for their own breakthrough.
-              </p>
-              <p>
-                One of those collaborators was Herman Asafo-Agyei — the Ghanaian bassist, singer, and bandleader who was balancing his musical ambitions alongside a law degree at the time. Between 1982 and 1984, we worked together on demos that I carried from Nigeria to London, knocking on doors and searching for an opportunity.
-              </p>
-              <p>
-                Eventually, one of those doors opened. Chief Tony Okoroji, working through EMI Records, heard my music and was captivated by the sound. “When Tony Okoroji first heard the music, he decided to sign me to EMI as an artiste,” I recalled. “And that was the beginning for me.”
-              </p>
-              <p className="italic text-accent-orange font-medium">
-                That moment marked the true start of a journey that would shape my identity, my sound, and my place in music.
-              </p>
-            </div>
+        {/* Professional Bento Grid System */}
+        <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[250px] gap-4 md:gap-6 group/gallery">
+          {gallery.map((item, i) => {
+            // Unique spanning logic for a professional architectural look
+            const isLarge = i === 0 || i === 7;
+            const isTall = i === 2 || i === 5 || i === 10;
+            const isWide = i === 1 || i === 8;
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-8">
-              {[
-                { label: "Total Streams", val: "500M+", icon: Music },
-                { label: "Collaborations", val: "50+", icon: Users },
-                { label: "Awards Won", val: "12", icon: Award },
-                { label: "Countries", val: "35+", icon: Globe },
-              ].map((stat) => (
-                <div key={stat.label} className="p-6 rounded-2xl glass border border-white/5">
-                  <stat.icon className="w-6 h-6 text-accent-orange mb-4" />
-                  <div className="text-3xl font-black mb-1">{stat.val}</div>
-                  <div className="text-[10px] uppercase tracking-widest font-bold text-white/40">{stat.label}</div>
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className={cn(
+                  "relative rounded-[2rem] overflow-hidden glass border border-white/5 transition-all duration-700 group cursor-pointer",
+                  isLarge && "md:col-span-2 md:row-span-2",
+                  isTall && "md:row-span-2",
+                  isWide && "md:col-span-2",
+                  "hover:z-20 hover:border-accent-orange/50 hover:shadow-[0_0_50px_rgba(255,87,34,0.15)]",
+                  "group-hover/gallery:opacity-50 hover:!opacity-100" // Spotlight effect
+                )}
+              >
+                <img 
+                  src={item.images} 
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105" 
+                  alt={item.title || "Gallery"} 
+                />
+                
+                {/* Minimalist Glass Overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end">
+                  <div className="glass-dark border border-white/10 px-4 py-2 rounded-xl backdrop-blur-xl">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-accent-orange block mb-1">Archive {String(i + 1).padStart(2, '0')}</span>
+                    <h4 className="text-xs font-bold text-white uppercase truncate max-w-[150px]">{item.title || "Untitled Moment"}</h4>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                {/* Subtle Inner Glow */}
+                <div className="absolute inset-0 border border-white/5 rounded-[2rem] pointer-events-none group-hover:border-accent-orange/20 transition-colors" />
+              </motion.div>
+            );
+          })}
         </div>
       </Section>
-
-      {/* 4. BRANDS & COLLABORATIONS */}
-      <Section id="brands" className="bg-black py-12">
-        <div className="text-center mb-12">
-          <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-white/40 mb-4 block">Trusted by Global Icons</span>
-        </div>
-        <div className="relative flex overflow-hidden">
-          <motion.div
-            animate={{ x: [0, -1000] }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="flex gap-20 items-center whitespace-nowrap"
-          >
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex gap-20 items-center">
-                <span className="text-4xl md:text-6xl font-black text-white/10 hover:text-white/30 transition-colors cursor-default">BALENCIAGA</span>
-                <span className="text-4xl md:text-6xl font-black text-white/10 hover:text-white/30 transition-colors cursor-default">VOGUE</span>
-                <span className="text-4xl md:text-6xl font-black text-white/10 hover:text-white/30 transition-colors cursor-default">PUMA</span>
-                <span className="text-4xl md:text-6xl font-black text-white/10 hover:text-white/30 transition-colors cursor-default">MONCLER</span>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </Section>
-
-      {/* 5. MEDIA (VIDEOS & GALLERY) */}
-      
       {/* 7. EVENTS */}
       <Section id="events" className="bg-[#0a0a0a]">
         <div className="flex items-end justify-between mb-16">
@@ -231,34 +454,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-4">
-          {[
-            { city: "Lagos, Nigeria", venue: "Eko Atlantic Arena", date: "JUN 15, 2026", status: "Selling Fast" },
-            { city: "London, UK", venue: "O2 Academy Brixton", date: "JUL 02, 2026", status: "Sold Out" },
-            { city: "Accra, Ghana", venue: "Black Star Square", date: "JUL 18, 2026", status: "On Sale" },
-            { city: "Paris, France", venue: "Accor Arena", date: "AUG 05, 2026", status: "Coming Soon" },
-          ].map((event) => (
-            <motion.div
-              key={event.venue}
-              whileHover={{ x: 20 }}
-              className="flex flex-col md:flex-row items-center justify-between p-8 rounded-3xl glass border border-white/5 hover:border-accent-orange/50 transition-all duration-500 group"
-            >
-              <div className="flex flex-col items-center md:items-start mb-6 md:mb-0">
-                <span className="text-2xl md:text-4xl font-black uppercase tracking-tighter group-hover:text-accent-orange transition-colors">{event.city}</span>
-                <span className="text-white/40 font-bold uppercase tracking-widest text-xs">{event.venue}</span>
-              </div>
-              <div className="text-center md:text-right flex flex-col md:flex-row items-center gap-8">
-                <div className="flex flex-col">
-                  <span className="text-xl font-black">{event.date}</span>
-                  <span className={cn("text-[10px] uppercase font-black px-2 py-1 rounded-md text-center",
-                    event.status === "Sold Out" ? "bg-red-500/20 text-red-500" : "bg-accent-green/20 text-accent-green"
-                  )}>{event.status}</span>
-                </div>
-                <button className="px-8 py-3 rounded-full bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-accent-orange hover:text-white transition-all disabled:opacity-50" disabled={event.status === "Sold Out"}>
-                  {event.status === "Sold Out" ? "Sold Out" : "Get Tickets"}
-                </button>
-              </div>
-            </motion.div>
-          ))}
+          <h1 className='text-white text-8xl font-black uppercase tracking-tighter'>COMING SOON</h1>
         </div>
       </Section>
       {/* 8. SOCIAL & FAN ENGAGEMENT */}
