@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import dynamic from 'next/dynamic';
 import type ReactPlayerType from 'react-player';
 
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as unknown as typeof ReactPlayerType;
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 import { cn } from "@/lib/utils";
 
