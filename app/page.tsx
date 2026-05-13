@@ -5,9 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Music, ArrowRight, Disc, Award, Users, Globe, Mail, Link as LinkIcon } from "lucide-react";
+import { FaInstagram, FaFacebook, FaSpotify } from 'react-icons/fa6';
 import Navbar from "./components/Navbar";
 import Section from "./components/Section";
 import { supabase } from "@/lib/supabaseClient";
+
 
 import { cn } from "@/lib/utils";
 
@@ -466,10 +468,42 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { platform: "TikTok", handle: "@stevemonite", href: '', followers: "1.2M", color: "bg-[#fe2c55]" },
-            { platform: "Instagram", handle: "https://www.instagram.com/stevemoniteofficial/", href: '', followers: "850K", color: "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]" },
-            { platform: "YouTube", handle: "Steve Monite TV", href: '', followers: "2K+", color: "bg-[#ff0000]" },
-            { platform: "X", handle: "@stevemonite", href: '', followers: "200K", color: "bg-white text-black" },
+            { 
+              platform: "Instagram", 
+              handle: "@stevemoniteofficial", 
+              href: 'https://www.instagram.com/stevemoniteofficial/', 
+              followers: "850K", 
+              color: "bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
+              icon: <FaInstagram className="w-8 h-8 text-white" />
+            },
+            { 
+              platform: "Spotify", 
+              handle: "Steve Monite", 
+              href: 'https://open.spotify.com/artist/stevemonite', 
+              followers: "120K Monthly", 
+              color: "bg-[#1DB954]",
+              icon: <FaSpotify className="w-8 h-8 text-white" />
+            },
+            { 
+              platform: "Facebook", 
+              handle: "Steve Monite", 
+              href: 'https://facebook.com/stevemonite', 
+              followers: "200K", 
+              color: "bg-[#1877F2]",
+              icon: <FaFacebook className="w-8 h-8 text-white" />
+            },
+            { 
+              platform: "DistroKid", 
+              handle: "Stream Everywhere", 
+              href: 'https://distrokid.com/hyperfollow/stevemonite', 
+              followers: "Listen Now", 
+              color: "bg-black border border-white/20",
+              icon: (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 18c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6zm-2-7h4v2h-4v-2z" />
+                </svg>
+              )
+            },
           ].map((social) => (
             <Link key={social.platform} href={social.href} target="_blank" className="block outline-none">
               <motion.div
@@ -477,7 +511,7 @@ export default function Home() {
                 className="p-8 rounded-3xl glass border border-white/5 flex flex-col items-center text-center group cursor-pointer h-full"
               >
                 <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500", social.color)}>
-                  <Music className="w-8 h-8" />
+                  {social.icon}
                 </div>
                 <h3 className="text-xl font-black uppercase mb-1">{social.platform}</h3>
                 <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] mb-4">{social.handle}</p>

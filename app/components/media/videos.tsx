@@ -11,10 +11,10 @@ interface VideoAsset {
     video?: string;
     url?: string;
     title: string;
-    thumbnail?: string;
-    category?: string;
-    subtitle?: string;
-    created_at?: string;
+    thumbnail: string;
+    category: string;
+    subtitle: string;
+    created_at: string;
 }
 
 // Helper to check if a URL is a direct video file
@@ -64,7 +64,7 @@ const Videos = () => {
         const { data, error } = await supabase
             .from('videos')
             .select('*')
-            .eq('type', 'video')
+            
             .order('created_at', { ascending: false });
         
         if (data) setVideos(data);
@@ -80,7 +80,7 @@ const Videos = () => {
 
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this video?")) return;
-        const { error } = await supabase.from('media').delete().eq('id', id);
+        const { error } = await supabase.from('videos').delete().eq('id', id);
         if (!error) fetchVideos();
     };
 
@@ -123,14 +123,13 @@ const Videos = () => {
 
             if (!finalVideoUrl) throw new Error("Please provide a link or upload a video file");
 
-            const { error: dbError } = await supabase.from('media').insert({
+            const { error: dbError } = await supabase.from('videos').insert({
                 title,
                 url: finalVideoUrl,
-                video: finalVideoUrl,
+                video_url: finalVideoUrl,
                 category,
                 thumbnail: thumbnailUrl,
-                type: 'video',
-                subtitle: category
+            
             });
 
             if (dbError) throw dbError;

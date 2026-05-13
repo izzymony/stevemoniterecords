@@ -8,13 +8,13 @@ import { useMutation } from '@tanstack/react-query';
 
 interface VideoAsset {
     id: string;
-    video?: string;
-    url?: string;
+    video: string;
+    url: string;
     title: string;
-    thumbnail?: string;
-    category?: string;
-    subtitle?: string;
-    created_at?: string;
+    thumbnail: string;
+    category: string;
+    subtitle: string;
+    created_at: string;
 }
 
 // Helper to convert standard video URLs to embed URLs
@@ -88,14 +88,9 @@ const Videos = () => {
                 thumbnail = publicUrl;
             }
 
-            const { error: dbError } = await supabase.from('media').insert({
-                title,
-                url,
-                video: url,
-                category,
-                thumbnail,
-                type: 'video',
-                subtitle: category
+            const { error: dbError } = await supabase.from('videos').insert({
+              title,
+
             });
 
             if (dbError) throw dbError;

@@ -5,6 +5,7 @@ import { Plus, Disc, Edit3, Trash2, X, Upload, Camera, Calendar, Link as LinkIco
 import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
+import Image from 'next/image';
 
 
 interface Release {
@@ -180,7 +181,7 @@ const Releases = () => {
                                 </h3>
                                 
                                 <form onSubmit={(e) => { e.preventDefault(); uploadMutation.mutate(); }} className="space-y-5">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">             ¬   
                                         {/* Left Side: Title & Type/Date Grid */}
                                         <div className="space-y-6">
                                             <div className="space-y-2">
@@ -324,10 +325,11 @@ const Releases = () => {
                                 <div className="relative z-10 w-full bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-accent-orange/50 transition-all duration-500 shadow-2xl flex flex-col md:flex-row">
                                     <div className="relative w-full md:w-56 aspect-square shrink-0 overflow-hidden group/cover">
                                         {item.img_url ? (
-                                            <img 
+                                            <Image 
                                                 src={item.img_url} 
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                 alt={item.title} 
+                                                fill
                                             />
                                         ) : (
                                             <div className="w-full h-full bg-white/5 flex items-center justify-center">

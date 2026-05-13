@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Fallback to a placeholder URL during build if the real one is missing.
+// This prevents 'supabaseUrl is required' errors during Next.js prerendering on Vercel.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-// We don't throw an error here because it crashes the Next.js build process during prerendering.
-// Instead, we initialize the client. It will fail gracefully in the browser if keys are truly missing.
+// Only log in development to help debugging missing keys
+if (process.env.NODE_ENV === 'development' && (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+    console.warn("⚠️ Supabase credentials missing in .env file. Using placeholders.");
+}
+
 export const supabase = createClient(supabaseUrl, supabaseKey);
