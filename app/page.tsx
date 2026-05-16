@@ -187,92 +187,162 @@ export default function Home() {
       </section>
 
       {/* 2. LATEST RELEASES */}
-      <Section id="releases" className="bg-black">
-        <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
-          <div>
-            <span className="text-accent-purple font-bold uppercase tracking-widest text-sm mb-4 block">New Sound</span>
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Latest Releases</h2>
-          </div>
-          <Link href="#" className="flex items-center gap-2 text-white/60 hover:text-accent-orange transition-colors group">
-            <span className="font-bold uppercase tracking-widest text-xs">View Discography</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+      <Section id="releases" className="relative overflow-hidden bg-black">
+  {/* Ambient Background Glow */}
+  <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div className="absolute left-[10%] top-0 h-[400px] w-[400px] rounded-full bg-accent-orange/10 blur-[120px]" />
+    <div className="absolute bottom-0 right-[10%] h-[400px] w-[400px] rounded-full bg-accent-purple/10 blur-[120px]" />
+  </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {loading ? (
-            <div className="col-span-full py-24 text-center">
-              <div className="w-12 h-12 border-4 border-accent-orange/20 border-t-accent-orange rounded-full animate-spin mx-auto mb-4" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">Syncing Discography...</span>
+  {/* Header */}
+  <div className="relative z-10 mb-16 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+    <div>
+      <span className="mb-4 block text-sm font-bold uppercase tracking-[0.3em] text-accent-purple">
+        New Sound
+      </span>
+
+      <h2 className="text-4xl font-black uppercase tracking-tighter text-white md:text-6xl">
+        Latest Releases
+      </h2>
+    </div>
+
+    <Link
+      href="#"
+      className="group flex items-center gap-3 text-white/50 transition-all duration-300 hover:text-accent-orange"
+    >
+      <span className="text-xs font-black uppercase tracking-[0.25em]">
+        View Discography
+      </span>
+
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 group-hover:border-accent-orange/30 group-hover:bg-accent-orange/10">
+        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+      </div>
+    </Link>
+  </div>
+
+  {/* Grid */}
+  <div className="relative z-10 grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+    {loading ? (
+      <div className="col-span-full py-24 text-center">
+        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-accent-orange/20 border-t-accent-orange" />
+
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">
+          Syncing Discography...
+        </span>
+      </div>
+    ) : releases.length === 0 ? (
+      <div className="col-span-full rounded-[2rem] border border-dashed border-white/10 bg-white/[0.02] py-24 text-center backdrop-blur-xl">
+        <Disc className="mx-auto mb-4 h-12 w-12 text-white/10" />
+
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 italic">
+          No releases found
+        </span>
+      </div>
+    ) : (
+      releases.map((release, i) => (
+        <motion.div
+          key={release.id}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: i * 0.08 }}
+          className="group relative overflow-hidden rounded-[2.7rem]"
+        >
+          {/* Glow Layer */}
+          <div className="absolute -inset-[1px] rounded-[2.7rem] bg-gradient-to-br from-accent-orange/30 via-accent-purple/20 to-transparent opacity-60 blur-2xl transition-all duration-700 group-hover:opacity-100 group-hover:blur-3xl" />
+
+          {/* Main Card */}
+          <div className="relative aspect-square overflow-hidden rounded-[2.7rem] border border-white/10 bg-[#0B0B0B] shadow-[0_20px_80px_rgba(0,0,0,0.7)]">
+
+            {/* Image */}
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={release.img_url}
+                alt={release.title}
+                width={500}
+                height={500}
+                className="h-full w-full object-cover scale-105 transition-transform duration-[1400ms] group-hover:scale-110"
+              />
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+              {/* Cinematic Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-accent-orange/10 via-transparent to-accent-purple/10 opacity-70 transition-opacity duration-700 group-hover:opacity-100" />
             </div>
-          ) : releases.length === 0 ? (
-            <div className="col-span-full py-24 border-2 border-dashed border-white/5 rounded-3xl text-center">
-              <Disc className="w-12 h-12 text-white/5 mx-auto mb-4" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 italic">No releases found</span>
-            </div>
-          ) : (
-            releases.map((release, i) => (
-              <motion.div
-                key={release.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative aspect-square overflow-hidden rounded-[2.5rem] bg-white/5 border border-white/10 shadow-2xl"
-              >
-                {/* Background Image */}
-                <div className="absolute inset-0 z-0">
-                  <img 
-                    src={release.img_url} 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                    alt={release.title} 
-                  />
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-500" />
+
+            {/* Floating Ambient Light */}
+            <div className="absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-accent-orange/20 blur-3xl opacity-50 transition-all duration-700 group-hover:opacity-100" />
+
+            {/* Content */}
+            <div className="relative z-20 flex h-full flex-col justify-between p-8">
+
+              {/* Top Meta */}
+              <div className="flex items-start justify-between">
+                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-[8px] font-black uppercase tracking-[0.25em] text-white/70 backdrop-blur-md">
+                  {release.type}
+                </span>
+
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">
+                  {release.release_date
+                    ? new Date(release.release_date).getFullYear()
+                    : "2024"}
+                </span>
+              </div>
+
+              {/* Bottom Content */}
+              <div>
+
+                {/* Title */}
+                <div className="mb-8">
+                  <h3 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+                    {release.title}
+                  </h3>
+
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.3em] text-white/40">
+                    Steve Monite
+                  </p>
                 </div>
 
-                {/* Aesthetic Play Button (Center) */}
-                <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                  {release.spotify_url ? (
-                    <a 
-                      href={release.spotify_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-20 h-20 rounded-full bg-accent-orange text-white flex items-center justify-center shadow-[0_0_30px_rgba(255,87,34,0.4)] hover:scale-110 transition-transform active:scale-95 group/play"
-                    >
-                      <Play className="w-8 h-8 fill-current ml-1 group-hover:scale-110 transition-transform" />
-                    </a>
-                  ) : (
-                    <div className="px-6 py-3 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-[10px] font-black uppercase tracking-widest text-white/60">
-                      Coming Soon
-                    </div>
-                  )}
-                </div>
-
-                {/* Content Overlay */}
-                <div className="absolute inset-0 z-20 p-10 flex flex-col justify-end pointer-events-none">
-                  <motion.div
-                    className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500"
+                {/* CTA */}
+                {release.spotify_url ? (
+                  <Link
+                    href={release.spotify_url}
+                    className="group/play flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 backdrop-blur-xl transition-all duration-500 hover:border-accent-orange/30 hover:bg-accent-orange/10"
                   >
-                    <span className="inline-block px-3 py-1 rounded-full bg-accent-orange/20 border border-accent-orange/30 text-[8px] font-black uppercase tracking-[0.2em] text-accent-orange mb-3">
-                      {release.type}
-                    </span>
-                    <h3 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
-                      {release.title}
-                    </h3>
-                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
-                      {release.release_date ? new Date(release.release_date).getFullYear() : '2024'} • Steve Monite
-                    </p>
-                  </motion.div>
-                </div>
+                    <div>
+                      <span className="block text-[9px] font-black uppercase tracking-[0.3em] text-white/40">
+                        Listen Now
+                      </span>
 
-                {/* Bottom Shine Effect */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black to-transparent opacity-80 z-5" />
-              </motion.div>
-            ))
-          )}
-        </div>
-      </Section>
+                      <span className="mt-1 block text-sm font-semibold text-white">
+                        Stream Release
+                      </span>
+                    </div>
 
+                    {/* Play Button */}
+                    <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent-orange via-[#ff7a18] to-accent-purple shadow-[0_0_35px_rgba(255,120,50,0.45)] transition-all duration-500 group-hover/play:scale-110">
+                      <div className="absolute inset-0 rounded-full bg-white/20 blur-md" />
+
+                      <Play className="relative z-10 ml-1 h-5 w-5 fill-current text-white" />
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-5 text-center text-[10px] font-black uppercase tracking-[0.3em] text-white/30 backdrop-blur-xl">
+                    Coming Soon
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Border Highlight */}
+            <div className="pointer-events-none absolute inset-0 rounded-[2.7rem] border border-white/5 transition-colors duration-700 group-hover:border-accent-orange/20" />
+          </div>
+        </motion.div>
+      ))
+    )}
+  </div>
+</Section>
       {/* 3. ABOUT THE ARTIST */}
       <Section id="about" className="bg-[#080808] relative overflow-hidden py-32">
         {/* Large Background Text */}
@@ -397,10 +467,11 @@ export default function Home() {
               className="group relative aspect-video rounded-[2.5rem] overflow-hidden glass border border-white/5 cursor-pointer shadow-2xl"
               onClick={() => setActiveVideo(video)}
             >
-              <img 
+              <Image
                 src={video.thumbnail} 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-70 group-hover:opacity-100" 
                 alt={video.title} 
+                fill
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-all duration-500" />
               
@@ -415,20 +486,21 @@ export default function Home() {
                   <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{video.title}</h3>
                   <div className="flex items-center gap-2 text-white/40 mt-1">
                     {isDirectVideoFile(video.video_url || video.url || "") ? <FileVideo className="w-3 h-3" /> : <LinkIcon className="w-3 h-3" />}
-                    <span className="text-[8px] font-bold uppercase tracking-widest">
+                    {/* <span className="text-[8px] font-bold uppercase tracking-widest">
                       {video.video_url || video.url || 'Studio Visual'}
-                    </span>
+                    </span> */}
                   </div>
                 </div>
-                <a 
-                  href={video.video_url || video.url} 
+                <Link
+                  href={video.video_url || video.url || ''} 
+
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="p-4 rounded-2xl bg-white/10 hover:bg-white text-white hover:text-black transition-all border border-white/10"
+                  className=""
                 >
                   <ExternalLink className="w-5 h-5" />
-                </a>
+                </Link>
               </div>
             </motion.div>
           ))}
@@ -472,10 +544,11 @@ export default function Home() {
                   "group-hover/gallery:opacity-50 hover:!opacity-100" // Spotlight effect
                 )}
               >
-                <img 
+                <Image
                   src={item.images} 
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105" 
                   alt={item.title || "Gallery"} 
+                  fill
                 />
                 
                 {/* Minimalist Glass Overlay */}
