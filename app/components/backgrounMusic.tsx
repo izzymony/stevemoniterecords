@@ -10,6 +10,11 @@ const BackgroundMusic = ({play}: Props) => {
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  const handleVideoPlay = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
+  }
   useEffect(()=>{
     if(!audioRef.current) return;
     if(play){
@@ -30,10 +35,28 @@ const BackgroundMusic = ({play}: Props) => {
     }
 
   },[play])
+
+  useEffect(()=>{
+    const handlePauseSignal = () => audioRef.current?.pause();
+    const handlePlaySignal = () => audioRef.current?.play().catch(()=>{});
+    window.addEventListener('pauseBackgroundMusic', handlePauseSignal);
+    window.addEventListener('playBackgroundMusic', handlePlaySignal);
+    return () => {
+      window.removeEventListener('pauseBackgroundMusic', handlePauseSignal);
+      window.removeEventListener('playBackgroundMusic', handlePlaySignal);
+    }
+
+    
+  },[])
+
+  
   return (
     <audio ref={audioRef} loop preload="auto">
       <source src="/audio/onlyyou.wav" type="audio/mpeg" />
+       <video/>
     </audio>
+
+   
   )
 }
 

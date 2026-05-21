@@ -13,10 +13,12 @@ import dynamic from 'next/dynamic';
 import type ReactPlayerType from 'react-player';
 import IntroScreen from './components/IntroScreen';
 import BackgroundMusic from './components/backgrounMusic';
+import Router from 'next/navigation';
 
 const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 import { cn } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
 
 interface Release {
     id: string;
@@ -56,7 +58,7 @@ export default function Home() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [entered, setEntered] = useState(false);
-
+  const router = useRouter()
   // Video Lightbox State
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
@@ -94,6 +96,15 @@ export default function Home() {
 
     fetchData();
   }, []);
+
+  const handleVideoPlay = () => {
+    window.dispatchEvent(new Event('pauseBackgroundMusic'));
+
+  }
+
+  const handleVideoStop = () => {
+    window.dispatchEvent(new Event('playBackgroundMusic'));
+  }
 
   // Lock scroll when intro is active
   useEffect(() => {
@@ -252,7 +263,7 @@ export default function Home() {
           <div className="absolute -inset-[1px] rounded-[2.7rem] bg-gradient-to-br from-accent-orange/30 via-accent-purple/20 to-transparent opacity-60 blur-2xl transition-all duration-700 group-hover:opacity-100 group-hover:blur-3xl" />
 
           {/* Main Card */}
-          <div className="relative aspect-square overflow-hidden rounded-[2.7rem] border border-white/10 bg-[#0B0B0B] shadow-[0_20px_80px_rgba(0,0,0,0.7)]">
+          <div onClick={()=> router.push(`/releases/${release.id}`)} className="relative aspect-square overflow-hidden rounded-[2.7rem] border border-white/10 bg-[#0B0B0B] shadow-[0_20px_80px_rgba(0,0,0,0.7)]">
 
             {/* Image */}
             <div className="absolute inset-0 overflow-hidden">
@@ -295,7 +306,7 @@ export default function Home() {
 
                 {/* Title */}
                 <div className="mb-8">
-                  <h3 className="text-3xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
+                  <h3 className="text-3xl md:text-4xl sm:text-2xl font-black uppercase tracking-tighter leading-none text-white drop-shadow-2xl">
                     {release.title}
                   </h3>
 
@@ -305,33 +316,7 @@ export default function Home() {
                 </div>
 
                 {/* CTA */}
-                {release.spotify_url ? (
-                  <Link
-                    href={release.spotify_url}
-                    className="group/play flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 backdrop-blur-xl transition-all duration-500 hover:border-accent-orange/30 hover:bg-accent-orange/10"
-                  >
-                    <div>
-                      <span className="block text-[9px] font-black uppercase tracking-[0.3em] text-white/40">
-                        Listen Now
-                      </span>
-
-                      <span className="mt-1 block text-sm font-semibold text-white">
-                        Stream Release
-                      </span>
-                    </div>
-
-                    {/* Play Button */}
-                    <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent-orange via-[#ff7a18] to-accent-purple shadow-[0_0_35px_rgba(255,120,50,0.45)] transition-all duration-500 group-hover/play:scale-110">
-                      <div className="absolute inset-0 rounded-full bg-white/20 blur-md" />
-
-                      <Play className="relative z-10 ml-1 h-5 w-5 fill-current text-white" />
-                    </div>
-                  </Link>
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-5 text-center text-[10px] font-black uppercase tracking-[0.3em] text-white/30 backdrop-blur-xl">
-                    Coming Soon
-                  </div>
-                )}
+             
               </div>
             </div>
 
@@ -486,9 +471,7 @@ export default function Home() {
                   <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{video.title}</h3>
                   <div className="flex items-center gap-2 text-white/40 mt-1">
                     {isDirectVideoFile(video.video_url || video.url || "") ? <FileVideo className="w-3 h-3" /> : <LinkIcon className="w-3 h-3" />}
-                    {/* <span className="text-[8px] font-bold uppercase tracking-widest">
-                      {video.video_url || video.url || 'Studio Visual'}
-                    </span> */}
+                    
                   </div>
                 </div>
                 <Link
@@ -523,7 +506,7 @@ export default function Home() {
         {/* Professional Bento Grid System */}
         <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[250px] gap-4 md:gap-6 group/gallery">
           {gallery.map((item, i) => {
-            // Unique spanning logic for a professional architectural look
+            
             const isLarge = i === 0 || i === 7;
             const isTall = i === 2 || i === 5 || i === 10;
             const isWide = i === 1 || i === 8;
@@ -540,8 +523,9 @@ export default function Home() {
                   isLarge && "md:col-span-2 md:row-span-2",
                   isTall && "md:row-span-2",
                   isWide && "md:col-span-2",
+                  "sm:grid-cols-2",
                   "hover:z-20 hover:border-accent-orange/50 hover:shadow-[0_0_50px_rgba(255,87,34,0.15)]",
-                  "group-hover/gallery:opacity-50 hover:!opacity-100" // Spotlight effect
+                  "group-hover/gallery:opacity-50 hover:!opacity-100" 
                 )}
               >
                 <Image
@@ -769,6 +753,9 @@ export default function Home() {
                   src={activeVideo.video_url || activeVideo.url} 
                   controls autoPlay muted playsInline 
                   onLoadedData={() => setIsPlayerLoading(false)} 
+                  onPause={handleVideoStop}
+                  onPlay={handleVideoPlay}
+                  onEnded={handleVideoStop}
                   className="w-full h-full object-contain" 
                 />
               ) : (

@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Disc, Edit3, Trash2, X, Upload, Camera, Calendar, Link as LinkIcon, Play } from 'lucide-react';
+import { Plus, Disc, Edit3, Trash2, X, Upload, Camera, Calendar, Link as LinkIcon, Play, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import Image from 'next/image';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Toaster, toast } from './ui/toast';
+import { useRouter } from 'next/navigation';
 
 
 interface Release {
@@ -14,7 +19,13 @@ interface Release {
     type: string;
     release_date: string;
     img_url: string;
-    spotify_url: string;
+}
+
+interface ReleaseId{
+    id: string; 
+    platform: string;
+    url:string;
+
 }
 
 const Card = ({ children, title, action }: { children: React.ReactNode, title: string, action?: React.ReactNode }) => (
@@ -32,6 +43,8 @@ const Card = ({ children, title, action }: { children: React.ReactNode, title: s
 const Releases = () => {
     const [releases, setReleases] = useState<Release[]>([]);
     const [loading, setLoading] = useState(false);
+    const [releaseLinks, setRealeaseLinks] = useState<ReleaseId[]>([]);
+    const [editRelease, setEditReleases] = useState<string | null>(null);
     
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +57,7 @@ const Releases = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const router = useRouter();
 
     const fetchReleases = async () => {
         setLoading(true);
@@ -64,6 +78,102 @@ const Releases = () => {
         const { error } = await supabase.from('releases').delete().eq('id', id);
         if (!error) fetchReleases();
     };
+
+      
+
+
+    // Zod Schema for Release Links
+    const releaseLinkFormSchema = z.object({
+        platform: z.string().min(1, { message: "Platform is required" }),
+        url: z.string()
+            .min(1, { message: "URL is required" })
+            .url({ message: "Please enter a valid URL" }),
+    });
+
+    type ReleaseLinkFormValues = z.infer<typeof releaseLinkFormSchema>;
+
+    const {
+        register,
+        handleSubmit,
+        reset: resetLinkForm,
+        formState: { errors }
+    } = useForm<ReleaseLinkFormValues>({
+        resolver: zodResolver(releaseLinkFormSchema),
+        defaultValues: {
+            platform: "",
+            url: ""
+        }
+    });
+
+    const releaseLink = useMutation({
+        mutationFn: async (values: ReleaseLinkFormValues) => {
+            if (!editRelease) throw new Error("No active release selected");
+            
+            const payload = {
+                release_uuid:editRelease,
+                platform: values.platform,
+                url: values.url,
+            };
+            
+            const { data, error: releasesError } = await supabase
+                .from('release_id')
+                .insert(payload);
+            
+            if (releasesError) throw releasesError;
+            return data;
+        },
+        onSuccess: () => {
+            if (editRelease) {
+                fetchReleaseLinks(editRelease);
+            }
+            resetLinkForm();
+            toast.success("Platform link added successfully!", "Success");
+        },
+        onError: (err: any) => {
+            toast.error(err.message || "Could not add platform link", "Error");
+        }
+    });
+
+    const deleteLinkMutation = useMutation({
+        mutationFn: async (linkId: string) => {
+            const { error } = await supabase
+                .from('release_id')
+                .delete()
+                .eq('id', linkId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            if (editRelease) {
+                fetchReleaseLinks(editRelease);
+            }
+            toast.success("Platform link deleted successfully!", "Success");
+        },
+        onError: (err: any) => {
+            toast.error(err.message || "Could not delete platform link", "Error");
+        }
+    });
+
+    const fetchReleaseLinks = async (releaseId: string) => {
+        const { data, error } = await supabase
+            .from('release_id')
+            .select('*')
+            .eq('id', releaseId);
+            
+        
+        if (error) {
+            console.error("Error fetching release links:", error);
+        } else if (data) {
+            setRealeaseLinks(data);
+        }
+    };
+
+    useEffect(() => {
+        if (editRelease) {
+            fetchReleaseLinks(editRelease);
+        } else {
+            setRealeaseLinks([]);
+        }
+    }, [editRelease]);
 
     const uploadMutation = useMutation({
         mutationFn: async () => {
@@ -92,7 +202,6 @@ const Releases = () => {
                 type,
                 release_date: date,
                 img_url,
-                spotify_url: spotifyUrl,
             };
 
             // 2. Insert or Update
@@ -143,7 +252,6 @@ const Releases = () => {
         setTitle(item.title);
         setType(item.type);
         setDate(item.release_date);
-        setSpotifyUrl(item.spotify_url);
         setSelectedFile(null);
         setPreviewUrl(item.img_url);
         setIsModalOpen(true);
@@ -322,7 +430,7 @@ const Releases = () => {
                                 </div>
 
                                 {/* Album Cover Card */}
-                                <div className="relative z-10 w-full bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-accent-orange/50 transition-all duration-500 shadow-2xl flex flex-col md:flex-row">
+                                <div onClick={()=>router.push(`/releases/${item.id}`)} className="relative z-10 w-full bg-[#0A0A0A] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-accent-orange/50 transition-all duration-500 shadow-2xl flex flex-col md:flex-row">
                                     <div className="relative w-full md:w-56 aspect-square shrink-0 overflow-hidden group/cover">
                                         {item.img_url ? (
                                             <Image 
@@ -339,7 +447,7 @@ const Releases = () => {
                                         <div className="absolute inset-0 bg-black/40 group-hover/cover:bg-black/60 transition-colors" />
                                         
                                         {/* Aesthetic Play Button Overlay */}
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-all duration-500 scale-90 group-hover/cover:scale-100">
+                                      {/*   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-all duration-500 scale-90 group-hover/cover:scale-100">
                                             {item.spotify_url ? (
                                                 <a 
                                                     href={item.spotify_url} 
@@ -354,7 +462,7 @@ const Releases = () => {
                                                     No Link
                                                 </div>
                                             )}
-                                        </div>
+                                        </div> */}
 
                                         <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[8px] font-black uppercase tracking-widest text-white/70">
                                             {item.type}
@@ -372,7 +480,7 @@ const Releases = () => {
                                         </div>
 
                                         <div className="flex flex-col md:flex-row items-center gap-4 mt-auto pt-6 border-t border-white/5">
-                                            {item.spotify_url ? (
+                                           {/*  {item.spotify_url ? (
                                                 <a 
                                                     href={item.spotify_url} 
                                                     target="_blank" 
@@ -386,18 +494,25 @@ const Releases = () => {
                                                 <div className="w-full md:flex-1 flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl bg-white/5 text-white/20 text-[10px] font-black uppercase tracking-[0.2em] border border-white/5 italic">
                                                     No Link Added
                                                 </div>
-                                            )}
+                                            )} */}
                                             
                                             <div className="flex items-center gap-2 w-full md:w-auto justify-center">
                                                 <button 
-                                                    onClick={() => handleEdit(item)}
+                                                    onClick={(e) => { e.stopPropagation(); setEditReleases(item.id); }}
+                                                    className="p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-accent-orange hover:text-white transition-all shadow-lg group/link"
+                                                    title="Manage Platform Links"
+                                                >
+                                                    <LinkIcon className="w-4 h-4 group-hover/link:scale-110 transition-transform" />
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
                                                     className="p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-accent-orange hover:text-white transition-all shadow-lg group/edit"
                                                     title="Edit Release"
                                                 >
                                                     <Edit3 className="w-4 h-4 group-hover/edit:rotate-12 transition-transform" />
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleDelete(item.id)}
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                                                     className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all shadow-lg group/trash"
                                                     title="Delete Release"
                                                 >
@@ -412,6 +527,139 @@ const Releases = () => {
                     )}
                 </div>
             </div>
+
+            <AnimatePresence>
+                {editRelease && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", duration: 0.5 }}
+                            className="w-full max-w-2xl bg-[#0A0A0A] border border-white/10 rounded-3xl overflow-hidden glass-dark shadow-2xl relative"
+                        >
+                            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
+                                    <LinkIcon className="w-4 h-4 text-accent-orange" />
+                                    Manage Links: <span className="text-accent-orange">{releases.find(r => r.id === editRelease)?.title || 'Release'}</span>
+                                </h3>
+                                <button 
+                                    onClick={() => setEditReleases(null)}
+                                    className="p-2 hover:bg-white/5 rounded-full transition-colors group"
+                                >
+                                    <X className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
+                                </button>
+                            </div>
+                            
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Existing Links List */}
+                                <div className="space-y-4 flex flex-col min-h-0">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                                        Current Links
+                                    </h4>
+                                    
+                                    <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                                        {releaseLinks.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center p-8 border border-dashed border-white/5 rounded-2xl text-center text-white/20 text-[10px] font-bold uppercase tracking-wider italic">
+                                                No links added yet
+                                            </div>
+                                        ) : (
+                                            releaseLinks.map((link) => (
+                                                <div 
+                                                    key={link.id}
+                                                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all group"
+                                                >
+                                                    <div className="flex flex-col min-w-0 pr-4">
+                                                        <span className="font-bold text-xs uppercase tracking-widest text-accent-orange">
+                                                            {link.platform}
+                                                        </span>
+                                                        <a 
+                                                            href={link.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[10px] text-white/40 truncate hover:text-white flex items-center gap-1 mt-1 transition-colors"
+                                                        >
+                                                            {link.url}
+                                                            <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                                                        </a>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => deleteLinkMutation.mutate(link.id)}
+                                                        disabled={deleteLinkMutation.isPending}
+                                                        className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                        title="Delete Link"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {/* Add Link Form */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                                        Add New Link
+                                    </h4>
+                                    
+                                    <form onSubmit={handleSubmit((values) => releaseLink.mutate(values))} className="space-y-5">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Platform</label>
+                                            <select 
+                                                {...register("platform")}
+                                                className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-orange/50 text-white"
+                                            >
+                                                <option value="" disabled>Select Platform</option>
+                                                <option value="Spotify">Spotify</option>
+                                                <option value="Apple Music">Apple Music</option>
+                                                <option value="YouTube">YouTube</option>
+                                                <option value="SoundCloud">SoundCloud</option>
+                                                <option value="iTunes">iTunes</option>
+                                                <option value="BoomPlay">BoomPlay</option>
+                                                <option value="Audiomack">Audiomack</option>
+                                                <option value="Deezer">Deezer</option>
+                                                <option value="Tidal">Tidal</option>
+                                                <option value="Bandcamp">Bandcamp</option>
+                                                <option value="Other">Other / Website</option>
+                                            </select>
+                                            {errors.platform && (
+                                                <p className="text-[9px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.platform.message}</p>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">URL</label>
+                                            <input 
+                                                type="text"
+                                                {...register("url")}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-orange/50 text-white"
+                                                placeholder="https://..."
+                                            />
+                                            {errors.url && (
+                                                <p className="text-[9px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.url.message}</p>
+                                            )}
+                                        </div>
+                                        
+                                        <button 
+                                            type="submit"
+                                            disabled={releaseLink.isPending}
+                                            className="w-full py-3.5 rounded-xl bg-accent-orange text-white text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {releaseLink.isPending ? "Adding..." : (
+                                                <>
+                                                    <Plus className="w-3.5 h-3.5" /> Add Link
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            <Toaster />
         </Card>
     );
 };
